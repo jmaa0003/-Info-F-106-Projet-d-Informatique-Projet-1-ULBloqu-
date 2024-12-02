@@ -11,33 +11,44 @@ def parse_game(game_file_path: str) -> dict:
         #INITIALISATION DES CLĚS DANS LE DICTIONNAIRE game
         whole_file = str(GFP.read())
         
+
+        ###TEST3333
+        l = [i for i in whole_file]
+        print(l)
+        GFP.seek()
         #INITIALISATION DE 'WIDTH', 'LENGTH', 'MAX_MOVES' dans le dictionnaire game
-        WIDTH, LENGTH, MAX_MOVES, EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = -3, 0, "", "+", "-", "|", "."
+        WIDTH, LENGTH, MAX_MOVES, EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = 0, 0, "", "+", "-", "|", "."
+        edge_counter = 0
         for w in whole_file:
-            while w != VERT_BOUNDARY:
-                WIDTH += 1
+            if edge_counter < 2:
+                if w != EDGE_OF_MAP:
+                    WIDTH += 1
+                else:
+                    edge_counter += 1
+        
         OFFSET, row = 4, 1
-        while whole_file[WIDTH*row+OFFSET] != HORIZ_BOUNDARY :
+        while whole_file[((2*WIDTH+OFFSET) + (2+WIDTH) * row)-1] != HORIZ_BOUNDARY :
             row += 1
-            LENGTH = row
+        LENGTH = row
             
         for i in range(len(whole_file)-1, -1, -1):
-            while whole_file[i] != EDGE_OF_MAP:
-                if whole_file[i].isnumeric():
+            if whole_file[i] != EDGE_OF_MAP and whole_file[i].isnumeric():
                     MAX_MOVES += str(whole_file[i])
 
         game['width'], game['length'] = WIDTH, LENGTH
         game['cars'], game['max_moves'], game['empty_slot'] = [], int(MAX_MOVES[::-1]), []
 
-        GFP.seek(0)
+        GFP.seek()
 
         #COPIE DU PLAN DE JEU
         truncated_whole_file = whole_file[:len(whole_file)-4]
+        ###TEST3333
+        print("w ->", game.get('width'), "l ->", game.get('length'), "TOPG ->", game)
         game_board = game_board_maker(game.get('width'), game.get('length'))
 
         pos = 0
         for twf in truncated_whole_file:
-            if i.isalpha():
+            if twf.isalpha():
                 ligne, colonne = pos//game.get('width'), (pos%game.get('width'))-1 
                 game_board[ligne+1][colonne+1] = twf #Note à moi-même: bordures comptées.
             pos += 1
@@ -72,7 +83,8 @@ def parse_game(game_file_path: str) -> dict:
                             game['cars'].append (current_car[-1][1] - current_car[0][1] + 1 )
                         else:
                             game['cars'].append(current_car[-1][0] - current_car[0][0] + 1 )
-
+                j += 1
+            i += 1
     return game
                 
 
@@ -114,10 +126,10 @@ def game_board_maker(width, length, coordonnees_car_A=None):
     UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(width-2)}{EDGE_OF_MAP}"
     MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*width}{VERT_BOUNDARY}"
 
-    game_board_template = [[].extend(UPPER_LOWER_BOUND)]
+    game_board_template = [list(UPPER_LOWER_BOUND)]
     for i in range(length):
-        game_board_template.append([].extend(MIDDLE_ROW))
-    game_board_template.append([].extend(UPPER_LOWER_BOUND))
+        game_board_template.append(list(MIDDLE_ROW))
+    game_board_template.append(list(UPPER_LOWER_BOUND))
 
     if coordonnees_car_A != None:
         game_board_template[coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x,y) <=> x-ème colonne, y-ème ligne
