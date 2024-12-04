@@ -10,12 +10,8 @@ def parse_game(game_file_path: str) -> dict:
     with open(game_file_path, 'r') as GFP:
         #INITIALISATION DES CLĚS DANS LE DICTIONNAIRE game
         whole_file = str(GFP.read())
-        
-
-        ###TEST3333
-        l = [i for i in whole_file]
-        print(l)
         GFP.seek()
+        
         #INITIALISATION DE 'WIDTH', 'HEIGHT', 'MAX_MOVES' dans le dictionnaire game
         WIDTH, HEIGHT, MAX_MOVES, EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = 0, 0, "", "+", "-", "|", "."
         edge_counter = 0
@@ -37,14 +33,11 @@ def parse_game(game_file_path: str) -> dict:
 
         game['width'], game['height'] = WIDTH, HEIGHT
         game['cars'], game['max_moves'], game['empty_slot'] = [], int(MAX_MOVES[::-1]), []
-
         GFP.seek()
 
         #COPIE DU PLAN DE JEU
         truncated_whole_file = whole_file[:len(whole_file)-3]
-        
         game_board = game_board_maker(game.get('width'), game.get('height'))
-        print(game_board)
         pos = 1
         for twf in truncated_whole_file:
             if twf.isalpha():
@@ -54,40 +47,34 @@ def parse_game(game_file_path: str) -> dict:
             pos += 1
 
         #CONSTRUCTION DE 'cars' DANS LE DICTIONNAIRE game
-        i = 1
         temp_car_pieces = {}
-        while i < game.get('height')+1:
-            j = 1                              #TODO: si possible, remttre en for ... in range...
-            while j < game.get('width')+1:
+        for i in range(1,game.get('height')+1):
+            for j in range(1, game.get('width')+1):
                 if not game_board[i][j].isalpha():
-                    game['empty_slot'].append( (j-1, i-1) ) # decrémente car itère sur la bordure dans mon programme
+                    game['empty_slot'].append( (j-1, i-1) ) # -1 car j'itère sur la bordure dans mon programme
                 else:
                     if game_board[i][j] not in temp_car_pieces.keys() :
                         temp_car_pieces[f'{game_board[i][j]}'] = []
                     temp_car_pieces[f'{game_board[i][j]}'].append( (j-1, i-1) )
-                j += 1
-            i += 1
-        
-        greatest_car_value = max(temp_car_pieces.keys())
-                    
+             
         #TROUVER L'ORIGINE DE CHAQUE VOITURE
+        greatest_car_value = max(temp_car_pieces.keys())           
         for index in range(ord('A'), ord(greatest_car_value)+1):
             current_car = temp_car_pieces[f'{chr(index)}']
             current_car.sort()
-            game['cars'].append(current_car[0]) #origine de la voiture dans le plan
 
             def orientation_car(var):
                 return 'v' if all([var[i][1] == var[0][1] for i in range(len(var))]) else 'h'
             
-            game['cars'].append( orientation_car(current_car) )
-
             if orientation_car(current_car) == 'h':
-                game['cars'].append (current_car[-1][1] - current_car[0][1] + 1 )
+                current_car_length = current_car[-1][1] - current_car[0][1] + 1    
             else:
-                game['cars'].append(current_car[-1][0] - current_car[0][0] + 1 )
+                current_car_length = current_car[-1][0] - current_car[0][0] + 1 
+            game['cars'].append([current_car[0], orientation_car(current_car), current_car_length] )
+            #origine de la voiture dans le plan = current_car[0] = temp_car_pieces[lettre_voiture][0]
+            
     return game
                 
-
 
 def get_game_str(game: dict, current_move_number: int) -> str:
     game_board = game_board_maker(game.get('width'), game.get('HEIGHT'), game.get('cars')[0][0])
