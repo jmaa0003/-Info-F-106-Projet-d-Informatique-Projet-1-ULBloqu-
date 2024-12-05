@@ -64,12 +64,12 @@ def parse_game(game_file_path: str) -> dict:
             current_car.sort()
 
             def orientation_car(var):
-                return 'v' if all([var[i][1] == var[0][1] for i in range(len(var))]) else 'h'
+                return 'h' if all([var[i][1] == var[0][1] for i in range(len(var))]) else 'v'
             
             if orientation_car(current_car) == 'h':
-                current_car_length = current_car[-1][1] - current_car[0][1] + 1    
+                current_car_length = current_car[-1][0] - current_car[0][0] + 1  
             else:
-                current_car_length = current_car[-1][0] - current_car[0][0] + 1 
+                current_car_length = current_car[-1][1] - current_car[0][1] + 1
             game['cars'].append([current_car[0], orientation_car(current_car), current_car_length] )
             #origine de la voiture dans le plan = current_car[0] = temp_car_pieces[lettre_voiture][0]
             
