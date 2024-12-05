@@ -41,9 +41,9 @@ def parse_game(game_file_path: str) -> dict:
         pos = 1
         for twf in truncated_whole_file:
             if twf.isalpha():
-                fk_y = pos//(game.get('width')+3)
-                fk_x = pos%(   (game.get('width')+3)*fk_y + 1   )
-                game_board[fk_y][fk_x] = twf #Note à moi-même: bordures comptées.
+                corrupted_y = pos//(game.get('width')+3)
+                corrupted_x = pos%(   (game.get('width')+3)*corrupted_y + 1   )
+                game_board[corrupted_y][corrupted_x] = twf #Note à moi-même: bordures comptées.
             pos += 1
 
         #CONSTRUCTION DE 'cars' DANS LE DICTIONNAIRE game
@@ -77,23 +77,46 @@ def parse_game(game_file_path: str) -> dict:
                 
 
 def get_game_str(game: dict, current_move_number: int) -> str:
-    game_board = game_board_maker(game.get('width'), game.get('HEIGHT'), game.get('cars')[0][0])
+    game_board = game_board_maker(game.get('width'), game.get('height'), game.get('cars')[0][0])
     MAX_MOVES = game.get('max_moves')
+    WHITE, SUFFIX = ("white", "\u001b[47m"), "\u001b[0m"
+    colours = [("red", "\u001b[41m"),\
+               ("green", "\u001b[42m"),\
+               ("yellow", "\u001b[43m"),\
+               ("blue", "\u001b[44m"),\
+               ("magenta", "\u001b[45m"),\
+               ("cyan", "\u001b[46m") ]
     string_to_print = ""
+                    
     if not current_move_number % 10 :
         if MAX_MOVES - current_move_number == 10:
-            string_to_print = f"ATTENTION ! {MAX_MOVES - current_move_number} mouvements restants"
+            string_to_print = f"ATTENTION ! {MAX_MOVES - current_move_number} mouvements restants\n\n"
         else:   
-            string_to_print = f"Il vous reste {MAX_MOVES - current_move_number} mouvements"
+            string_to_print = f"Il vous reste {MAX_MOVES - current_move_number} mouvements\n\n"
     
+    for car_index, car in enumerate(game.get('cars')):
+        car_letter, car_length, car_orientation = chr(ord('A') + car_index), car[2], car[1]
+        cyclic = (car_index-1)%(len(colours))
+        car_origin_x, car_origin_y = car[0]
+        
+        if car_orientation == 'h':
+            for x in range(car_length):
+                if car_index == 0:
+                    game_board[car_origin_y + 1][car_origin_x + x + 1] = WHITE[1] + car_letter + SUFFIX #La voiture blanche est toujours horizontale
+                else:
+                    game_board[car_origin_y + 1][car_origin_x + x + 1] = colours[cyclic][1] + car_letter + SUFFIX
+        else:
+            for y in range(car_length):
+                game_board[car_origin_y + y + 1][car_origin_x + 1] = colours[cyclic][1] + car_letter + SUFFIX
+
     for i in range(len(game_board)-1):
-        for j in game_board[i]:
+        for j in range(len(game_board[i])):
             string_to_print += game_board[i][j]
         string_to_print += "\n"
     for last_row in game_board[-1]:
         string_to_print += last_row
     
-    return string_to_print
+    return string_to_print # TODO: self.assertIn("36", game_str, "Le nombre de mouvements courrant n'est pas affiché")
 
 
 def move_car(game: dict, car_index: int, direction: str) -> bool:
@@ -108,10 +131,10 @@ def play_game(game: dict) -> int:
     pass
 
 
-def game_board_maker(width, HEIGHT, coordonnees_car_A=None):
+def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None):
     EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = "+", "-", "|", "."
-    UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(width-2)}{EDGE_OF_MAP}"
-    MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*width}{VERT_BOUNDARY}"
+    UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(WIDTH-2)}{EDGE_OF_MAP}"
+    MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*WIDTH}{VERT_BOUNDARY}"
 
     game_board_template = [list(UPPER_LOWER_BOUND)]
     for i in range(HEIGHT):
