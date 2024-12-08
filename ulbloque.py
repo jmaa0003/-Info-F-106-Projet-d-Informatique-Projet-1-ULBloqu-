@@ -4,6 +4,7 @@ JOSHUA
 000569226
 """
 from sys import argv
+from getkey import getkey
 
 def parse_game(game_file_path: str) -> dict:
     game = {}
@@ -86,19 +87,18 @@ def get_game_str(game: dict, current_move_number: int) -> str:
                ("blue", "\u001b[44m"),\
                ("magenta", "\u001b[45m"),\
                ("cyan", "\u001b[46m") ]
+    
     string_to_print = ""
-                    
-    if not current_move_number % 10 :
-        if MAX_MOVES - current_move_number == 10:
-            string_to_print = f"ATTENTION ! {MAX_MOVES - current_move_number} mouvements restants\n\n"
-        else:   
-            string_to_print = f"Il vous reste {MAX_MOVES - current_move_number} mouvements\n\n"
+    if MAX_MOVES - current_move_number < 11:
+        string_to_print = f"ATTENTION ! {current_move_number} mouvements effectués sur {MAX_MOVES}\n\n"
+    else:   
+        string_to_print = f"{current_move_number} mouvements effectués. {MAX_MOVES - current_move_number} restants\n\n"
     
     for car_index, car in enumerate(game.get('cars')):
         car_letter, car_length, car_orientation = chr(ord('A') + car_index), car[2], car[1]
         cyclic = (car_index-1)%(len(colours))
         car_origin_x, car_origin_y = car[0]
-        
+
         if car_orientation == 'h':
             for x in range(car_length):
                 if car_index == 0:
@@ -116,22 +116,75 @@ def get_game_str(game: dict, current_move_number: int) -> str:
     for last_row in game_board[-1]:
         string_to_print += last_row
     
-    return string_to_print # TODO: self.assertIn("36", game_str, "Le nombre de mouvements courrant n'est pas affiché")
+    return string_to_print
 
 
 def move_car(game: dict, car_index: int, direction: str) -> bool:
-    pass
+    UNAVAILABLE_COORDINATES = generate_coordinates(game.get('cars'))
+    SELECTED_CAR_ORIENTATION, SELECTED_CAR_LENGTH = game.get('cars')[car_index][1:]
+    X, Y = game.get('cars')[car_index][0]
+    HORIZONTAL_BOUND_X_COORD, VERTICAL_BOUND_Y_COORD = game.get('width'), game.get("height")
+    SELECTED_CAR_LETTER, MOVE_DONE = chr(car_index + ord('A')), False
+    message_utilisateur = ""
+
+    if SELECTED_CAR_ORIENTATION == 'h':
+        if direction == 'UP':
+            if all([  (X+j, Y-1) not in [(X, -1)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X, Y-1)
+
+        elif direction == 'DOWN':
+            if all([  (X+j, Y+1) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X, Y+1)
+
+        elif direction == 'RIGHT':
+            if all([  (X+j+SELECTED_CAR_LENGTH+1, Y) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X+SELECTED_CAR_LENGTH+1, Y)
+
+        elif direction == 'LEFT':
+            if all([  (X-1+j, Y) not in [(-1, Y)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X-1, Y)
+                
+        else:
+            message_utilisateur = '! Pas de déplacements en oblique autorisés !'
+    
+    else:
+        if direction == 'UP':
+            if all([  (X, Y-1+i) not in [(X, -1)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1) ]):
+                game['cars'][car_index][0] = (X, Y-1)
+
+        elif direction == 'DOWN':
+            if all([  (X+SELECTED_CAR_LENGTH+1, Y+i) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X+SELECTED_CAR_LENGTH+1, Y)
+                
+        elif direction == 'RIGHT':
+            if all([  (X+1, Y+i) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X+1, Y)
+
+        elif direction == 'LEFT':
+            if all([  (X-1, Y+i) not in [(-1, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
+                game['cars'][car_index][0] = (X-1, Y)
+
+        else:
+            message_utilisateur = '! Pas de déplacements en oblique autorisés !'
+
+    if message_utilisateur:
+        print(message_utilisateur)
+
+    return MOVE_DONE
 
  
 def is_win(game: dict) -> bool:
-    pass # return parse_game -> game_board[coordonnees][de la sortie] == chr(65)
-
-
+    CAR_A_X, CAR_A_Y = game.get('cars')[0][0]
+    CAR_A_LENGTH, HORIZONTAL_BOUND_X_COORD = game.get('cars')[0][2], game.get('width')
+    return (CAR_A_X + CAR_A_LENGTH, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
+# TODO: both for is_win and play_game, how can I calculate car_A win when the dict is changing throughout the game ?
+# TODO : ANSWER : if mouvement restants == MAX_MOVES, stocker, en variable de jeu,\
+#  les coordonnées pour la victoire !!
 def play_game(game: dict) -> int:
     pass
 
 
-def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None):
+def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None) -> list[list]:
     EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = "+", "-", "|", "."
     UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(WIDTH-2)}{EDGE_OF_MAP}"
     MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*WIDTH}{VERT_BOUNDARY}"
@@ -141,14 +194,28 @@ def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None):
         game_board_template.append(list(MIDDLE_ROW))
     game_board_template.append(list(UPPER_LOWER_BOUND))
 
-    if coordonnees_car_A != None:
+    if coordonnees_car_A:
         game_board_template[coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x,y) <=> x-ème colonne, y-ème ligne
 
     return game_board_template
     
-"""
-def
 
+def generate_coordinates(set_of_cars) -> list:
+    requested_coordinates = []
+    for car in set_of_cars:
+        car_orientation, car_length = car[1:]
+        x_origin, y_origin = car[0]
+        
+        if car_orientation == 'h':
+            for offset in range(car_length+1):
+               requested_coordinates.append((x_origin + offset, y_origin)) 
+        else:
+            for offset in range(car_length+1):
+               requested_coordinates.append((x_origin, y_origin + offset))
+
+    return requested_coordinates
+
+"""
 def
 
 def
