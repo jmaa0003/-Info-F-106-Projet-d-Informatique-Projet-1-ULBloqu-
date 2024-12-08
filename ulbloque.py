@@ -129,46 +129,37 @@ def move_car(game: dict, car_index: int, direction: str) -> bool:
 
     if SELECTED_CAR_ORIENTATION == 'h':
         if direction == 'UP':
-            if all([  (X+j, Y-1) not in [(X, -1)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X, Y-1)
+            if all([  (X+j, Y-1) not in [(X, -1)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH)  ]):
+                game['cars'][car_index][0],  MOVE_DONE = (X, Y-1), True
 
         elif direction == 'DOWN':
-            if all([  (X+j, Y+1) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X, Y+1)
+            if all([  (X+j, Y+1) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH)  ]):
+                game['cars'][car_index][0], MOVE_DONE = (X, Y+1), True
 
         elif direction == 'RIGHT':
-            if all([  (X+j+SELECTED_CAR_LENGTH+1, Y) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X+SELECTED_CAR_LENGTH+1, Y)
+            if (X+SELECTED_CAR_LENGTH, Y) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES:
+                game['cars'][car_index][0], MOVE_DONE = (X+1, Y), True
 
         elif direction == 'LEFT':
-            if all([  (X-1+j, Y) not in [(-1, Y)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X-1, Y)
-                
-        else:
-            message_utilisateur = '! Pas de déplacements en oblique autorisés !'
-    
+            if (X-1, Y) not in [(-1, Y)] + UNAVAILABLE_COORDINATES:
+                game['cars'][car_index][0], MOVE_DONE = (X-1, Y), True
+   
     else:
         if direction == 'UP':
-            if all([  (X, Y-1+i) not in [(X, -1)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1) ]):
-                game['cars'][car_index][0] = (X, Y-1)
+            if (X, Y-1) not in [(X, -1)] + UNAVAILABLE_COORDINATES:
+                game['cars'][car_index][0], MOVE_DONE = (X, Y-1), True
 
         elif direction == 'DOWN':
-            if all([  (X+SELECTED_CAR_LENGTH+1, Y+i) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X+SELECTED_CAR_LENGTH+1, Y)
-                
+            if (X, Y+SELECTED_CAR_LENGTH) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES:
+                game['cars'][car_index][0], MOVE_DONE = (X, Y+1), True
+
         elif direction == 'RIGHT':
-            if all([  (X+1, Y+i) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X+1, Y)
+            if all([  (X+1, Y+i) not in [(HORIZONTAL_BOUND_X_COORD, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH)  ]):
+                game['cars'][car_index][0], MOVE_DONE = (X+1, Y), True
 
         elif direction == 'LEFT':
-            if all([  (X-1, Y+i) not in [(-1, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH+1)  ]):
-                game['cars'][car_index][0] = (X-1, Y)
-
-        else:
-            message_utilisateur = '! Pas de déplacements en oblique autorisés !'
-
-    if message_utilisateur:
-        print(message_utilisateur)
+            if all([  (X-1, Y+i) not in [(-1, Y)] + UNAVAILABLE_COORDINATES for i in range(SELECTED_CAR_LENGTH)  ]):
+                game['cars'][car_index][0], MOVE_DONE = (X-1, Y), True
 
     return MOVE_DONE
 
@@ -176,12 +167,10 @@ def move_car(game: dict, car_index: int, direction: str) -> bool:
 def is_win(game: dict) -> bool:
     CAR_A_X, CAR_A_Y = game.get('cars')[0][0]
     CAR_A_LENGTH, HORIZONTAL_BOUND_X_COORD = game.get('cars')[0][2], game.get('width')
-    return (CAR_A_X + CAR_A_LENGTH, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
+    return (CAR_A_X + CAR_A_LENGTH - 1, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
 # TODO: both for is_win and play_game, how can I calculate car_A win when the dict is changing throughout the game ?
 # TODO : ANSWER : if mouvement restants == MAX_MOVES, stocker, en variable de jeu,\
 #  les coordonnées pour la victoire !!
-def play_game(game: dict) -> int:
-    pass
 
 
 def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None) -> list[list]:
@@ -207,17 +196,50 @@ def generate_coordinates(set_of_cars) -> list:
         x_origin, y_origin = car[0]
         
         if car_orientation == 'h':
-            for offset in range(car_length+1):
+            for offset in range(car_length):
                requested_coordinates.append((x_origin + offset, y_origin)) 
         else:
-            for offset in range(car_length+1):
+            for offset in range(car_length):
                requested_coordinates.append((x_origin, y_origin + offset))
 
     return requested_coordinates
 
-"""
-def
 
+def play_game(game: dict) -> int:
+    PARKING_EXIT_X, PARKING_EXIT_Y = game.get('width'), game.get('cars')[0][2]
+    print('▌│█║▌║▌║ Hé toi ! Oui toi ! Peux-tu m\'aider à sortir ma voiture du parking s\'il te plaît ? ║▌║▌║█│▌')
+    print('▌│█║▌║▌║ C\'est la voiture A, blanche. Elle est garée à l\'horizontale. ║▌║▌║█│▌\n')
+    print(get_game_str(game, game.get('max_moves')))
+    print(' --- Appuyer sur Y pour accepter, ESC pour fuir la situation ---\n')
+
+
+    STARTED_GAME = False
+    while not STARTED_GAME:
+        user_answer = getkey() 
+        if user_answer.isalpha():
+            if user_answer.upper() == 'Y':
+                STARTED_GAME, current_moves, MAX_MOVES = True, 0, game.get('max_moves')
+                print('▌│█║▌║▌║ Merci beaucoup ! Si tu n\'en peux plus, ou que tu dois partir, pas de souci ! Fais-le moi savoir ! ║▌║▌║█│▌')
+                print(' --- Durant la partie, pour quitter cette situation, appuyer sur ESC ---')
+                
+                car_A_coordinates = game.get('cars')[0][0]
+                while not car_A_coordinates == (PARKING_EXIT_X-1, PARKING_EXIT_Y) and current_moves < MAX_MOVES:
+                    key_pressed = getkey()
+                    if key_pressed.isalpha():
+                        pseudo_car_index = ord(key_pressed.upper()) - ord('A')
+                        if pseudo_car_index in [i for i in range(len(game.get('cars')))]:
+                            pass
+                            #TODO : formation du jeu --> selection de voiture, deplacement + incrémentation current_moves ou non ET finir par game_result = 1 sinon = 0
+                    #Remplacement plus adapté de is_win()
+
+        elif user_answer == 'ESCAPE':
+            game_result = 2
+            exit("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
+
+    return game_result
+
+
+"""
 def
 
 def
@@ -227,5 +249,6 @@ def
 
 if __name__ == '__main__':
     file_inserted = argv[0]
-    parse_game(file_inserted)
+    game = parse_game(file_inserted)
+    
 
