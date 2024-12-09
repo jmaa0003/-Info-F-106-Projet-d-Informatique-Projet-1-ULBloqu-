@@ -167,10 +167,7 @@ def move_car(game: dict, car_index: int, direction: str) -> bool:
 def is_win(game: dict) -> bool:
     CAR_A_X, CAR_A_Y = game.get('cars')[0][0]
     CAR_A_LENGTH, HORIZONTAL_BOUND_X_COORD = game.get('cars')[0][2], game.get('width')
-    return (CAR_A_X + CAR_A_LENGTH - 1, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
-# TODO: both for is_win and play_game, how can I calculate car_A win when the dict is changing throughout the game ?
-# TODO : ANSWER : if mouvement restants == MAX_MOVES, stocker, en variable de jeu,\
-#  les coordonnées pour la victoire !!
+    return (CAR_A_X + CAR_A_LENGTH, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
 
 
 def game_board_maker(WIDTH, HEIGHT, coordonnees_car_A=None) -> list[list]:
@@ -209,8 +206,10 @@ def play_game(game: dict) -> int:
     PARKING_EXIT_X, PARKING_EXIT_Y = game.get('width'), game.get('cars')[0][2]
     print('▌│█║▌║▌║ Hé toi ! Oui toi ! Peux-tu m\'aider à sortir ma voiture du parking s\'il te plaît ? ║▌║▌║█│▌')
     print('▌│█║▌║▌║ C\'est la voiture A, blanche. Elle est garée à l\'horizontale. ║▌║▌║█│▌\n')
+    
+    #DISPLAY
     print(get_game_str(game, game.get('max_moves')))
-    print(' --- Appuyer sur Y pour accepter, ESC pour fuir la situation ---\n')
+    print(' --- Appuyez sur Y pour accepter, ESC pour fuir la situation ---\n')
 
 
     STARTED_GAME = False
@@ -218,37 +217,58 @@ def play_game(game: dict) -> int:
         user_answer = getkey() 
         if user_answer.isalpha():
             if user_answer.upper() == 'Y':
-                STARTED_GAME, current_moves, MAX_MOVES = True, 0, game.get('max_moves')
+                STARTED_GAME, MAX_MOVES, CARS_INDEXES = True, game.get('max_moves'), [i for i in range(len(game.get('cars')))]
+                game_result, current_moves = None, 0
                 print('▌│█║▌║▌║ Merci beaucoup ! Si tu n\'en peux plus, ou que tu dois partir, pas de souci ! Fais-le moi savoir ! ║▌║▌║█│▌')
-                print(' --- Durant la partie, pour quitter cette situation, appuyer sur ESC ---')
+                print(' --- Durant la partie, appuyez sur ESC pour quitter. ---\n --- Bonne chance ! ---')
                 
                 car_A_coordinates = game.get('cars')[0][0]
-                while not car_A_coordinates == (PARKING_EXIT_X-1, PARKING_EXIT_Y) and current_moves < MAX_MOVES:
-                    key_pressed = getkey()
-                    if key_pressed.isalpha():
-                        pseudo_car_index = ord(key_pressed.upper()) - ord('A')
-                        if pseudo_car_index in [i for i in range(len(game.get('cars')))]:
-                            pass
-                            #TODO : formation du jeu --> selection de voiture, deplacement + incrémentation current_moves ou non ET finir par game_result = 1 sinon = 0
-                    #Remplacement plus adapté de is_win()
-
+                while game_result == None:
+                    if not car_A_coordinates == (PARKING_EXIT_X-1, PARKING_EXIT_Y) and current_moves < MAX_MOVES:  
+                        key_pressed = getkey()
+                        previous_car_index = None
+                        while key_pressed.isalpha() and ord(key_pressed.upper()) - ord('A') in CARS_INDEXES and prevbous != lettre de voiture
+                            mouvement
+                            current moves +1
+                            previous_car_index = getkey()
+                        else lettre de voiture:
+                            #TODO
+                           #TODO: boucle de deplacement continu
+                        
+                            print('Touche pressée invalide. Réessayez !')
+                                #TODO : formation du jeu --> selection de voiture, deplacement + incrémentation current_moves ou non ET finir par game_result = 1 sinon = 0
+                        #Remplacement plus adapté de is_win()
+                
         elif user_answer == 'ESCAPE':
             game_result = 2
-            exit("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
 
     return game_result
 
 
-"""
-def
+def movement_handler() -> bool:
+    index_car_selected = pseudo_car_index
+    second_pressed_key = getkey()
+    if second_pressed_key in {'DOWN', 'UP', 'LEFT', 'RIGHT'}:
+        move_car(game, index_car_selected, second_pressed_key)
+    elif second_pressed_key == 'ESCAPE':
+        game_result = 2
+    elif second_pressed_key.isalpha() and ord(second_pressed_key.upper()) - ord('A') in [i for i in range(len(game.get('cars')))]:
 
+"""
 def
 
 def
 """
 
 if __name__ == '__main__':
+    #INITIALISATION
     file_inserted = argv[0]
     game = parse_game(file_inserted)
     
+    if play_game(game) == 2:
+        exit("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
+    elif play_game(game) == 1:
+    elif play_game(game) == 0:
+    
+#TODO !!!! : DOCSTRINGS !!!!!!!
 
