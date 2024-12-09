@@ -221,21 +221,14 @@ def play_game(game: dict) -> int:
                 game_result, current_moves = None, 0
                 print('▌│█║▌║▌║ Merci beaucoup ! Si tu n\'en peux plus, ou que tu dois partir, pas de souci ! Fais-le moi savoir ! ║▌║▌║█│▌')
                 print(' --- Durant la partie, appuyez sur ESC pour quitter. ---\n --- Bonne chance ! ---')
-                
-                car_A_coordinates = game.get('cars')[0][0]
-                while game_result == None:
-                    if not car_A_coordinates == (PARKING_EXIT_X-1, PARKING_EXIT_Y) and current_moves < MAX_MOVES:  
-                        key_pressed = getkey()
-                        previous_car_index = None
-                        while key_pressed.isalpha() and ord(key_pressed.upper()) - ord('A') in CARS_INDEXES and prevbous != lettre de voiture
-                            mouvement
-                            current moves +1
-                            previous_car_index = getkey()
-                        else lettre de voiture:
-                            #TODO
-                           #TODO: boucle de deplacement continu
+
+                key_pressed = getkey()
+                while game_result == None and game.get('cars')[0][0] != (PARKING_EXIT_X-1, PARKING_EXIT_Y) and current_moves < MAX_MOVES: 
+                    # TODO : !!! VOIR "Solution Code !!!" dans bloc-notes Samsung
                         
-                            print('Touche pressée invalide. Réessayez !')
+                           #TODO: boucle de deplacement continu
+                           # TODO: changer le game_result en cours de pqrtie pour la defaite 
+                            
                                 #TODO : formation du jeu --> selection de voiture, deplacement + incrémentation current_moves ou non ET finir par game_result = 1 sinon = 0
                         #Remplacement plus adapté de is_win()
                 
