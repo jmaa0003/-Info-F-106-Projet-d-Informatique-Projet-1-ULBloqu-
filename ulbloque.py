@@ -11,7 +11,7 @@ def parse_game(game_file_path: str) -> dict:
     with open(game_file_path, 'r') as GFP:
         #INITIALISATION DES CLĚS DANS LE DICTIONNAIRE game
         whole_file = str(GFP.read())
-        GFP.seek()
+        GFP.seek(0)
         
         #INITIALISATION DE 'WIDTH', 'HEIGHT', 'MAX_MOVES' dans le dictionnaire game
         WIDTH, HEIGHT, MAX_MOVES, EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = 0, 0, "", "+", "-", "|", "."
@@ -34,7 +34,7 @@ def parse_game(game_file_path: str) -> dict:
 
         game['width'], game['height'] = WIDTH, HEIGHT
         game['cars'], game['max_moves'], game['empty_slot'] = [], int(MAX_MOVES[::-1]), []
-        GFP.seek()
+        GFP.seek(0)
 
         #COPIE DU PLAN DE JEU
         truncated_whole_file = whole_file[:len(whole_file)-3]
@@ -90,9 +90,9 @@ def get_game_str(game: dict, current_move_number: int) -> str:
     
     string_to_print = ""
     if MAX_MOVES - current_move_number < 11:
-        string_to_print = f"ATTENTION ! {current_move_number} mouvements effectués sur {MAX_MOVES}\n\n"
+        string_to_print = f" --- ATTENTION ! {current_move_number} mouvements effectués sur {MAX_MOVES} ---\n\n"
     else:   
-        string_to_print = f"{current_move_number} mouvements effectués. {MAX_MOVES - current_move_number} restants\n\n"
+        string_to_print = f" --- {current_move_number} mouvements effectués. {MAX_MOVES - current_move_number} restants ---\n\n"
     
     for car_index, car in enumerate(game.get('cars')):
         car_letter, car_length, car_orientation = chr(ord('A') + car_index), car[2], car[1]
@@ -129,7 +129,7 @@ def move_car(game: dict, car_index: int, direction: str) -> bool:
     if SELECTED_CAR_ORIENTATION == 'h':
         if direction == 'UP':
             if all([  (X+j, Y-1) not in [(X, -1)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH)  ]):
-                game['cars'][car_index][0],  move_has_been_done = (X, Y-1), True
+                game['cars'][car_index][0], move_has_been_done = (X, Y-1), True
 
         elif direction == 'DOWN':
             if all([  (X+j, Y+1) not in [(X, VERTICAL_BOUND_Y_COORD)] + UNAVAILABLE_COORDINATES for j in range(SELECTED_CAR_LENGTH)  ]):
@@ -171,7 +171,7 @@ def is_win(game: dict) -> bool:
 
 def game_board_maker(WIDTH: int, HEIGHT: int, coordonnees_car_A=None) -> list[list]:
     EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = "+", "-", "|", "."
-    UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(WIDTH-2)}{EDGE_OF_MAP}"
+    UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(WIDTH)}{EDGE_OF_MAP}"
     MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*WIDTH}{VERT_BOUNDARY}"
 
     game_board_template = [list(UPPER_LOWER_BOUND)]
@@ -202,7 +202,7 @@ def generate_coordinates(set_of_cars: list) -> list:
 
 
 def play_game(game: dict) -> int:
-    PARKING_EXIT_X, PARKING_EXIT_Y = game.get('width'), game.get('cars')[0][2]
+    PARKING_EXIT = (game.get('width'), game.get('cars')[0][2])
     MESSAGES = ['▌│█║▌║▌║ Hé toi ! Oui toi ! Peux-tu m\'aider à sortir ma voiture du parking s\'il te plaît ? ║▌║▌║█│▌',\
                 '▌│█║▌║▌║ C\'est la voiture A, blanche. Elle est garée à l\'horizontale. ║▌║▌║█│▌\n',\
                 ' --- Appuyez sur Y pour accepter, ESC pour fuir la situation ---\n',\
@@ -212,43 +212,47 @@ def play_game(game: dict) -> int:
                 ' --- Une voiture doit être choisie avant d\'exécuter un mouvement ',\
                 ' --- Sélection de voiture invalide. Réessayez',\
                 ' --- Touche invalide ---',\
-                ' --- Touche invalide ---\n --- RAPPEL:\n     ESC = fuir\n     Z ou z = liste des voitures sélectionnables\n\
-                ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---']
-
+                ' --- Touche invalide ---\n --- RAPPEL:\n     ESC = fuir\n     Clavier = Selectionner depuis le clavier la voiture à la\
+                lettre correspondante\n ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---',\
+                '▌│█║▌║▌║ OOOooh merci beaucoup ! Tu as réussi à amener ma voiture à la sortie dans les temps.\
+                Je n\'avais pas dis qu\'il manquait d\'essence donc tes mouvements étaient limités. ▌│█║▌║▌║\n▌│█║▌║▌║ Mais tu l\'as fait. Merci vraiment ! ▌│█║▌║▌║\n\
+                 _____ō͡≡o˞_____',
+                '▌│█║▌║▌║ Sacrebleu ! Non seulement ma voiture est coincée ici, mais en plus il n\'y a plus d\'essence !? Je n\'aurai jamais dû me garer ici.\
+                Merci toutefois pour ton aide j\'en suis reconnaissant...▌│█║▌║▌║\n --- ÉCHEC ---' ]
 
     print(MESSAGES[0])
     print(MESSAGES[1])
-    
     #DISPLAY
-    print(get_game_str(game, game.get('max_moves')))
+    print(get_game_str(game, 0))
     print(MESSAGES[2])
-
-
+    
     STARTED_GAME = False
     while not STARTED_GAME:
         user_answer = getkey() 
         if user_answer.isalpha():
             if user_answer.upper() == 'Y':
-                STARTED_GAME, MAX_MOVES, CARS_INDEXES = True, game.get('max_moves'), [i for i in range(len(game.get('cars')))]
-                game_result, moves_currently_done, times_invalid_keys_pressed = None, 0, 0
+                STARTED_GAME, MAX_MOVES, CAR_A_LENGTH, CARS_INDEXES = True, game.get('max_moves'), game.get('cars')[0][2], [i for i in range(len(game.get('cars')))]
+                #TODO: PEP NiauNaSaliMukinza + Longueur max de code voir PEP8
+                game_result, number_of_moves_done, times_invalid_keys_pressed = None, 0, 0
                 print(MESSAGES[3])
                 print(MESSAGES[4])
-
+                print(get_game_str(game, number_of_moves_done))
                 current_car_index = None
-                #TODO: si on appuie sur Z, affiche une liste de voiture sélectionnables + finir les mouvement les incrememntations ect game_str
-                while game_result == None and game.get('cars')[0][0] != (PARKING_EXIT_X-1, PARKING_EXIT_Y) and moves_currently_done < MAX_MOVES: 
+                while game_result == None and (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1]) != PARKING_EXIT \
+                                          and number_of_moves_done < MAX_MOVES:
                     key_pressed = getkey()
-                    if is_a_car_letter(key_pressed):
+                    if is_a_car_letter(key_pressed, CARS_INDEXES):
                         current_car_index = key_pressed
                     
                     elif is_a_move(key_pressed):
-                        if cci is None:
+                        if current_car_index is None:
                             print(MESSAGES[5])
                         else: 
                             move_car(current_car_index)
-                            moves_currently_done += 1
+                            number_of_moves_done += 1
+                            print(get_game_str(game, number_of_moves_done))
                     
-                    elif not (is_a_move(key_pressed) and is_a_car_letter(key_pressed)):
+                    elif not (is_a_move(key_pressed) and is_a_car_letter(key_pressed, CARS_INDEXES)):
                         if key_pressed.isalpha():
                             print(MESSAGES[6])
                         
@@ -263,15 +267,21 @@ def play_game(game: dict) -> int:
                             else:
                                 print(MESSAGES[7])
                                 times_invalid_keys_pressed += 1
-
+                
+                if number_of_moves_done == MAX_MOVES:
+                    if game.get('cars')[0][0] != PARKING_EXIT:
+                        game_result = 1
+                    else:
+                        game_result = 0
+                
+                else:
+                    game_result = 0
+            
         elif user_answer == 'ESCAPE':
             game_result = 2
 
     return game_result
 
-"""
-def
-"""
 
 def is_a_car_letter(pseudo_car_letter: str, list_of_cars_indices: list) -> bool:
     return pseudo_car_letter.isalpha() and ord(pseudo_car_letter.upper()) - ord('A') in list_of_cars_indices
@@ -282,14 +292,15 @@ def is_a_move(pseudo_move: str) -> bool:
 
 
 if __name__ == '__main__':
-    #INITIALISATION
-    file_inserted = argv[0]
+    file_inserted = argv[1]
     game = parse_game(file_inserted)
-    
-    if play_game(game) == 2:
-        exit("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
-    elif play_game(game) == 1:
-    elif play_game(game) == 0:
-    
+    result_after_game_played = play_game(game)
+    if result_after_game_played == 2:
+        print("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
+        exit()
+    elif result_after_game_played == 1:
+        print(MESSAGES[10])
+    elif result_after_game_played == 0:
+        print(MESSAGES[9])
 #TODO !!!! : DOCSTRINGS !!!!!!!
 
