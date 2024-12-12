@@ -225,58 +225,56 @@ def play_game(game: dict) -> int:
     STARTED_GAME = False
     while not STARTED_GAME:
         user_answer = getkey()
-        if user_answer.isalpha():
-            if user_answer.upper() == 'Y':
-                STARTED_GAME, MAX_MOVES, CAR_A_LENGTH, CARS_INDEXES = True, game.get('max_moves'), game.get('cars')[0][2], [i for i in range(len(game.get('cars')))]
-                #TODO: PEP NiauNaSaliMukinza + Longueur max de code voir PEP8
-                game_result, number_of_moves_done, times_invalid_keys_pressed = None, 0, 0
-                print(MESSAGES[3])
-                print(MESSAGES[4])
-                print(get_game_str(game, number_of_moves_done))
-                current_car_index = None
-                while game_result == None and (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1]) != PARKING_EXIT \
-                                          and number_of_moves_done < MAX_MOVES:
-                    key_pressed = getkey()
-                    
-                                
-                    if is_a_car_letter(key_pressed, CARS_INDEXES):
-                        current_car_index = ord(key_pressed.upper()) - ord('A')
-                    
-                    elif is_a_move(key_pressed):
-                        if current_car_index is None:
-                            print(MESSAGES[5])
-                        else: 
-                            if move_car(game, current_car_index, key_pressed):
-                                number_of_moves_done += 1
-                            print(get_game_str(game, number_of_moves_done))
-                    
+        if user_answer.upper() == 'Y':
+            STARTED_GAME, MAX_MOVES, CAR_A_LENGTH, CARS_INDEXES = True, game.get('max_moves'), game.get('cars')[0][2], [i for i in range(len(game.get('cars')))]
+            #TODO: PEP NiauNaSaliMukinza + Longueur max de code voir PEP8
+            game_result, number_of_moves_done, times_invalid_keys_pressed = None, 0, 0
+            print(MESSAGES[3])
+            print(MESSAGES[4])
+            print(get_game_str(game, number_of_moves_done))
+            current_car_index = None
+            key_pressed = None
+            while game_result == None and (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1]) != PARKING_EXIT \
+                                      and number_of_moves_done < MAX_MOVES and key_pressed != 'ESCAPE':
+                key_pressed = getkey()        
+                if is_a_car_letter(key_pressed, CARS_INDEXES):
+                    current_car_index = ord(key_pressed.upper()) - ord('A')
+                
+                elif is_a_move(key_pressed):
+                    if current_car_index is None:
+                        print(MESSAGES[5])
+                    else: 
+                        if move_car(game, current_car_index, key_pressed):
+                            number_of_moves_done += 1
+                        print(get_game_str(game, number_of_moves_done))
+                
+                else:    
+                    if key_pressed.isalpha() and key_pressed != 'ESCAPE':
+                        print(MESSAGES[6])
+                        
                     else:
-                        if key_pressed == 'ESCAPE':
-                            game_result = 2
-                            
-                        elif key_pressed.isalpha():
-                            print(MESSAGES[6])
-                            
+                        #TODO: gérer le UnicodeDecodeError
+                        if times_invalid_keys_pressed % 5 == 00 and times_invalid_keys_pressed > 0:
+                            #NOT TODO: Idée: si possible pénalité en décrémentant le nombre de moves autorisés 
+                            print(MESSAGES[8])
+                            times_invalid_keys_pressed += 1
                         else:
-                            #TODO: gérer le UnicodeDecodeError
-                            if times_invalid_keys_pressed % 5 == 00 and times_invalid_keys_pressed > 0:
-                                #NOT TODO: Idée: si possible pénalité en décrémentant le nombre de moves autorisés 
-                                print(MESSAGES[8])
-                                times_invalid_keys_pressed += 1
-                            else:
-                                print(MESSAGES[7])
-                                times_invalid_keys_pressed += 1
-                    
+                            print(MESSAGES[7])
+                            times_invalid_keys_pressed += 1
                 
-                if number_of_moves_done == MAX_MOVES:
-                    if game.get('cars')[0][0] != PARKING_EXIT:
-                        game_result = 1
-                    else:
-                        game_result = 0
-                
+            
+            if number_of_moves_done == MAX_MOVES:
+                if game.get('cars')[0][0] != PARKING_EXIT:
+                    game_result = 1
                 else:
                     game_result = 0
             
+            if key_pressed == 'ESCAPE':
+                game_result = 2
+            
+            else:
+                game_result = 0
+        
         elif user_answer == 'ESCAPE':
             game_result = 2
 
@@ -295,7 +293,7 @@ def is_a_move(pseudo_move: str) -> bool:
 if __name__ == '__main__':
     MESSAGES_MAIN = ['▌│█║▌║▌║ OOOooh merci beaucoup ! Tu as réussi à amener ma voiture à la sortie dans les temps.\
                      Je n\'avais pas dis qu\'il manquait d\'essence donc tes mouvements étaient limités. ▌│█║▌║▌║\n▌│█║▌║▌║ Mais tu l\'as fait. Merci vraiment ! ▌│█║▌║▌║\n\
-                 _____ō͡≡o˞_____',
+                     _____ō͡≡o˞_____',
                      '▌│█║▌║▌║ Sacrebleu ! Non seulement ma voiture est coincée ici, mais en plus il n\'y a plus d\'essence !? Je n\'aurai jamais dû me garer ici.\
                      Merci toutefois pour ton aide j\'en suis reconnaissant...▌│█║▌║▌║\n --- ÉCHEC ---',\
                      "A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴"]
