@@ -207,18 +207,14 @@ def play_game(game: dict) -> int:
                 '▌│█║▌║▌║ C\'est la voiture A, blanche. Elle est garée à l\'horizontale. ║▌║▌║█│▌\n',\
                 ' --- Appuyez sur Y pour accepter, ESC pour fuir la situation ---\n',\
                 '▌│█║▌║▌║ Merci beaucoup ! Si tu n\'en peux plus, ou que tu dois partir, pas de souci ! Fais-le moi savoir ! ║▌║▌║█│▌\n',\
-                ' --- Durant la partie, appuyez sur ESC pour quitter. ---\n --- TOUCHES:\n     ⇦⇧⇨⇩ pour déplacer une voiture\n     \
-                Clavier pour choisir la voiture à la lettre correspondante ---\n --- Bonne chance ! ---',\
-                ' --- Une voiture doit être choisie avant d\'exécuter un mouvement ',\
-                ' --- Sélection de voiture invalide. Réessayez',\
+                ' --- Durant la partie, appuyez sur ESC pour quitter. ---\n --- TOUCHES:\
+                \n     ⇦⇧⇨⇩ pour déplacer une voiture\n     Clavier pour choisir la voiture à la lettre correspondante ---\n\
+                --- Bonne chance ! ---',\
+                ' --- Une voiture doit être choisie avant d\'exécuter un mouvement ---',\
+                ' --- Sélection de voiture invalide. Réessayez ---',\
                 ' --- Touche invalide ---',\
-                ' --- Touche invalide ---\n --- RAPPEL:\n     ESC = fuir\n     Clavier = Selectionner depuis le clavier la voiture à la\
-                lettre correspondante\n ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---',\
-                '▌│█║▌║▌║ OOOooh merci beaucoup ! Tu as réussi à amener ma voiture à la sortie dans les temps.\
-                Je n\'avais pas dis qu\'il manquait d\'essence donc tes mouvements étaient limités. ▌│█║▌║▌║\n▌│█║▌║▌║ Mais tu l\'as fait. Merci vraiment ! ▌│█║▌║▌║\n\
-                 _____ō͡≡o˞_____',
-                '▌│█║▌║▌║ Sacrebleu ! Non seulement ma voiture est coincée ici, mais en plus il n\'y a plus d\'essence !? Je n\'aurai jamais dû me garer ici.\
-                Merci toutefois pour ton aide j\'en suis reconnaissant...▌│█║▌║▌║\n --- ÉCHEC ---' ]
+                ' --- Touche invalide ---\n --- RAPPEL:\n     ESC = fuir\nClavier = Selectionner depuis le clavier la voiture à la\
+                lettre correspondante\n ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---']
 
     print(MESSAGES[0])
     print(MESSAGES[1])
@@ -228,7 +224,7 @@ def play_game(game: dict) -> int:
     
     STARTED_GAME = False
     while not STARTED_GAME:
-        user_answer = getkey() 
+        user_answer = getkey()
         if user_answer.isalpha():
             if user_answer.upper() == 'Y':
                 STARTED_GAME, MAX_MOVES, CAR_A_LENGTH, CARS_INDEXES = True, game.get('max_moves'), game.get('cars')[0][2], [i for i in range(len(game.get('cars')))]
@@ -241,32 +237,36 @@ def play_game(game: dict) -> int:
                 while game_result == None and (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1]) != PARKING_EXIT \
                                           and number_of_moves_done < MAX_MOVES:
                     key_pressed = getkey()
+                    
+                                
                     if is_a_car_letter(key_pressed, CARS_INDEXES):
-                        current_car_index = key_pressed
+                        current_car_index = ord(key_pressed.upper()) - ord('A')
                     
                     elif is_a_move(key_pressed):
                         if current_car_index is None:
                             print(MESSAGES[5])
                         else: 
-                            move_car(current_car_index)
-                            number_of_moves_done += 1
+                            if move_car(game, current_car_index, key_pressed):
+                                number_of_moves_done += 1
                             print(get_game_str(game, number_of_moves_done))
                     
-                    elif not (is_a_move(key_pressed) and is_a_car_letter(key_pressed, CARS_INDEXES)):
-                        if key_pressed.isalpha():
-                            print(MESSAGES[6])
-                        
-                        elif key_pressed == 'ESCAPE':
+                    else:
+                        if key_pressed == 'ESCAPE':
                             game_result = 2
-                        
+                            
+                        elif key_pressed.isalpha():
+                            print(MESSAGES[6])
+                            
                         else:
-                            if times_invalid_keys_pressed % 5 and times_invalid_keys_pressed > 0:
+                            #TODO: gérer le UnicodeDecodeError
+                            if times_invalid_keys_pressed % 5 == 00 and times_invalid_keys_pressed > 0:
                                 #NOT TODO: Idée: si possible pénalité en décrémentant le nombre de moves autorisés 
                                 print(MESSAGES[8])
                                 times_invalid_keys_pressed += 1
                             else:
                                 print(MESSAGES[7])
                                 times_invalid_keys_pressed += 1
+                    
                 
                 if number_of_moves_done == MAX_MOVES:
                     if game.get('cars')[0][0] != PARKING_EXIT:
@@ -284,7 +284,8 @@ def play_game(game: dict) -> int:
 
 
 def is_a_car_letter(pseudo_car_letter: str, list_of_cars_indices: list) -> bool:
-    return pseudo_car_letter.isalpha() and ord(pseudo_car_letter.upper()) - ord('A') in list_of_cars_indices
+    return pseudo_car_letter.isalpha() and len(pseudo_car_letter) == 1 and ord(pseudo_car_letter.upper()) - ord('A')\
+           in list_of_cars_indices
 
 
 def is_a_move(pseudo_move: str) -> bool:
@@ -292,15 +293,18 @@ def is_a_move(pseudo_move: str) -> bool:
 
 
 if __name__ == '__main__':
+    MESSAGES_MAIN = ['▌│█║▌║▌║ OOOooh merci beaucoup ! Tu as réussi à amener ma voiture à la sortie dans les temps.\
+                     Je n\'avais pas dis qu\'il manquait d\'essence donc tes mouvements étaient limités. ▌│█║▌║▌║\n▌│█║▌║▌║ Mais tu l\'as fait. Merci vraiment ! ▌│█║▌║▌║\n\
+                 _____ō͡≡o˞_____',
+                     '▌│█║▌║▌║ Sacrebleu ! Non seulement ma voiture est coincée ici, mais en plus il n\'y a plus d\'essence !? Je n\'aurai jamais dû me garer ici.\
+                     Merci toutefois pour ton aide j\'en suis reconnaissant...▌│█║▌║▌║\n --- ÉCHEC ---',\
+                     "A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴"]
+    
     file_inserted = argv[1]
     game = parse_game(file_inserted)
     result_after_game_played = play_game(game)
     if result_after_game_played == 2:
-        print("A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴")
-        exit()
-    elif result_after_game_played == 1:
-        print(MESSAGES[10])
-    elif result_after_game_played == 0:
-        print(MESSAGES[9])
+        exit(MESSAGES_MAIN[result_after_game_played])
+    else:
+        print(MESSAGES_MAIN[result_after_game_played])
 #TODO !!!! : DOCSTRINGS !!!!!!!
-
