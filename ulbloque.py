@@ -21,7 +21,7 @@ def parse_game(game_file_path: str) -> dict:
                 if w != EDGE_OF_MAP:
                     WIDTH += 1
                 else:
-                    edge_counter += 1
+                    edge_counter +=  1
         
         OFFSET, row = 4, 1
         while whole_file[-1 + (2*WIDTH + 4 + row * (3 + WIDTH))] != HORIZ_BOUNDARY :
@@ -54,7 +54,7 @@ def parse_game(game_file_path: str) -> dict:
                 if not game_board[i][j].isalpha():
                     game['empty_slot'].append( (j-1, i-1) ) # -1 car j'itère sur la bordure dans mon programme
                 else:
-                    if game_board[i][j] not in temp_car_pieces.keys() :
+                    if game_board[i][j] not in temp_car_pieces.keys():
                         temp_car_pieces[f'{game_board[i][j]}'] = []
                     temp_car_pieces[f'{game_board[i][j]}'].append( (j-1, i-1) )
              
