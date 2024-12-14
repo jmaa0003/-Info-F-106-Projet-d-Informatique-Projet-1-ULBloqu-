@@ -52,20 +52,20 @@ def parse_game(game_file_path: str) -> dict:
             pos += 1
 
         #CONSTRUCTION DE 'cars' DANS LE DICTIONNAIRE game
-        temp_car_pieces = {}
-        for i in range(1,game.get('height')+1):
+        positions_of_car_pieces = {}
+        for i in range(1, game.get('height')+1):
             for j in range(1, game.get('width')+1):
                 if not game_board[i][j].isalpha():
                     game['empty_slot'].append( (j-1, i-1) ) # -1 car j'itère sur la bordure dans mon programme
                 else:
-                    if game_board[i][j] not in temp_car_pieces.keys() :
-                        temp_car_pieces[f'{game_board[i][j]}'] = []
-                    temp_car_pieces[f'{game_board[i][j]}'].append( (j-1, i-1) )
+                    if game_board[i][j] not in positions_of_car_pieces.keys() :
+                        positions_of_car_pieces[f'{game_board[i][j]}'] = []
+                    positions_of_car_pieces[f'{game_board[i][j]}'].append( (j-1, i-1) )
              
         #TROUVER L'ORIGINE DE CHAQUE VOITURE
-        greatest_car_value = max(temp_car_pieces.keys())           
+        greatest_car_value = max(positions_of_car_pieces.keys())           
         for index in range(ord('A'), ord(greatest_car_value)+1):
-            current_car = temp_car_pieces[f'{chr(index)}']
+            current_car = positions_of_car_pieces[f'{chr(index)}']
             current_car.sort()
 
             def orientation_car(var):
@@ -76,7 +76,7 @@ def parse_game(game_file_path: str) -> dict:
             else:
                 current_car_length = current_car[-1][1] - current_car[0][1] + 1
             game['cars'].append([current_car[0], orientation_car(current_car), current_car_length] )
-            #origine de la voiture dans le plan = current_car[0] = temp_car_pieces[lettre_voiture][0]
+            #origine de la voiture dans le plan = current_car[0] = positions_of_car_pieces[lettre_voiture][0]
             
     return game
                 
@@ -201,7 +201,7 @@ def game_board_maker(WIDTH: int, HEIGHT: int, coordonnees_car_A=None) -> list[li
     game_board_template.append(list(UPPER_LOWER_BOUND))
 
     if coordonnees_car_A:
-        game_board_template[1 + coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x,y) <=> x-ème colonne, y-ème ligne
+        game_board_template[1 + coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x, y) <=> x-ème colonne, y-ème ligne
 
     return game_board_template
     
