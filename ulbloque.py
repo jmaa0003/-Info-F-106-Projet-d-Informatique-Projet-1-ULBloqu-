@@ -7,6 +7,10 @@ from sys import argv
 from getkey import getkey
 
 def parse_game(game_file_path: str) -> dict:
+    """
+    Cette fonction prend en paramètre 'game_file_path', un lien vers un fichier de jeu, et renvoie le dictionnaire 'game',
+    primordial au bon déroulement de la suite du jeu.
+    """
     game = {}
     with open(game_file_path, 'r') as GFP:
         #INITIALISATION DES CLĚS DANS LE DICTIONNAIRE game
@@ -54,7 +58,7 @@ def parse_game(game_file_path: str) -> dict:
                 if not game_board[i][j].isalpha():
                     game['empty_slot'].append( (j-1, i-1) ) # -1 car j'itère sur la bordure dans mon programme
                 else:
-                    if game_board[i][j] not in temp_car_pieces.keys():
+                    if game_board[i][j] not in temp_car_pieces.keys() :
                         temp_car_pieces[f'{game_board[i][j]}'] = []
                     temp_car_pieces[f'{game_board[i][j]}'].append( (j-1, i-1) )
              
@@ -78,6 +82,10 @@ def parse_game(game_file_path: str) -> dict:
                 
 
 def get_game_str(game: dict, current_move_number: int) -> str:
+    """
+    Cette fonction prend en paramètres le dictionnaire 'game' et un entier 'current_move_number', et renvoie l'affichage du parking
+    correspondant au dictionnaire susmentionné.
+    """
     game_board = game_board_maker(game.get('width'), game.get('height'), game.get('cars')[0][0])
     MAX_MOVES = game.get('max_moves')
     WHITE, SUFFIX = ("white", "\u001b[47m"), "\u001b[0m"
@@ -120,6 +128,11 @@ def get_game_str(game: dict, current_move_number: int) -> str:
 
 
 def move_car(game: dict, car_index: int, direction: str) -> bool:
+    """
+    Cette fonction prend en paramètres le dictionnaire 'game', l'entier 'car_index' ainsi que la string 'direction' et
+    Tente d'effectuer le mouvement de la voiture [chr(65 + car_index)] dans la direction donnée.
+    Si le déplacement n'est pas possible dû à une collision avec une autre voiture ou une bordure, False est renvoyé sinon True
+    """
     UNAVAILABLE_COORDINATES = generate_coordinates(game.get('cars'))
     SELECTED_CAR_ORIENTATION, SELECTED_CAR_LENGTH = game.get('cars')[car_index][1:]
     X, Y = game.get('cars')[car_index][0]
@@ -164,12 +177,20 @@ def move_car(game: dict, car_index: int, direction: str) -> bool:
 
  
 def is_win(game: dict) -> bool:
+    """
+    Cette fonction prend le dictionnaire 'game' en paramètres et vérifie selon les données dans ce dictionnaire que la partie
+    est gagnée. Si oui, renvoie True, sinon False.
+    """
     CAR_A_X, CAR_A_Y = game.get('cars')[0][0]
     CAR_A_LENGTH, HORIZONTAL_BOUND_X_COORD = game.get('cars')[0][2], game.get('width')
     return (CAR_A_X + CAR_A_LENGTH, CAR_A_Y) == (HORIZONTAL_BOUND_X_COORD, CAR_A_Y) #j'empêche tout abus dans ma fonction 'move_car'
 
 
 def game_board_maker(WIDTH: int, HEIGHT: int, coordonnees_car_A=None) -> list[list]:
+    """
+    Cette fonction crée avec les paramètres entiers WIDTH, HEIGHT une matrice correspondant au parking de jeu.
+    Si coordonnees_car_A, un 2-tuple, est mentionné alors la sortie tout à droite de la voiture A est placée. 
+    """
     EDGE_OF_MAP, HORIZ_BOUNDARY, VERT_BOUNDARY, EMPTY = "+", "-", "|", "."
     UPPER_LOWER_BOUND = f"{EDGE_OF_MAP}{HORIZ_BOUNDARY*(WIDTH)}{EDGE_OF_MAP}"
     MIDDLE_ROW = f"{VERT_BOUNDARY}{EMPTY*WIDTH}{VERT_BOUNDARY}"
@@ -180,12 +201,16 @@ def game_board_maker(WIDTH: int, HEIGHT: int, coordonnees_car_A=None) -> list[li
     game_board_template.append(list(UPPER_LOWER_BOUND))
 
     if coordonnees_car_A:
-        game_board_template[coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x,y) <=> x-ème colonne, y-ème ligne
+        game_board_template[1 + coordonnees_car_A[-1]][-1] = EMPTY #dans mon programme (x,y) <=> x-ème colonne, y-ème ligne
 
     return game_board_template
     
 
 def generate_coordinates(set_of_cars: list) -> list:
+    """
+    Cette fonction prend en paramètre une liste de voitures et génère une liste des coordonnées dans le parking où il
+    n'est pas possible de se déplacer.
+    """
     requested_coordinates = []
     for car in set_of_cars:
         car_orientation, car_length = car[1:]
@@ -202,19 +227,26 @@ def generate_coordinates(set_of_cars: list) -> list:
 
 
 def play_game(game: dict) -> int:
-    PARKING_EXIT = (game.get('width'), game.get('cars')[0][2])
-    MESSAGES = ['▌│█║▌║▌║ Hé toi ! Oui toi ! Peux-tu m\'aider à sortir ma voiture du parking s\'il te plaît ? ║▌║▌║█│▌',\
+    """
+    Cette fonction prend en paramètre le dictionnaire 'game' et gère la partie entière de jeu. Elle renvoie:
+    - 0 si la voiture A est sortie
+    - 1 si elle n'est toujours pas sortie avant le nombre max de mouvement tolérés
+    - 2 si l'utilisateur abandonne la partie en appuyant sur ESC
+    """
+    PARKING_EXIT = (game.get('width'), game.get('cars')[0][0][1])
+    MESSAGES = ['▌│█║▌║▌║ Hé toi ! Oui toi ! Peux-tu m\'aider à sortir ma voiture du parking de l\'ULB s\'il te plaît ? ║▌║▌║█│▌',\
                 '▌│█║▌║▌║ C\'est la voiture A, blanche. Elle est garée à l\'horizontale. ║▌║▌║█│▌\n',\
                 ' --- Appuyez sur Y pour accepter, ESC pour fuir la situation ---\n',\
                 '▌│█║▌║▌║ Merci beaucoup ! Si tu n\'en peux plus, ou que tu dois partir, pas de souci ! Fais-le moi savoir ! ║▌║▌║█│▌\n',\
                 ' --- Durant la partie, appuyez sur ESC pour quitter. ---\n --- TOUCHES:\
                 \n     ⇦⇧⇨⇩ pour déplacer une voiture\n     Clavier pour choisir la voiture à la lettre correspondante ---\n\
-                --- Bonne chance ! ---',\
+                       --- Bonne chance ! ---',\
                 ' --- Une voiture doit être choisie avant d\'exécuter un mouvement ---',\
                 ' --- Sélection de voiture invalide. Réessayez ---',\
-                ' --- Touche invalide ---',\
                 ' --- Touche invalide ---\n --- RAPPEL:\n     ESC = fuir\nClavier = Selectionner depuis le clavier la voiture à la\
-                lettre correspondante\n ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---']
+                lettre correspondante\n ⇦⇧⇨⇩ = déplacer une voiture choisie au préalable ---',\
+                ' --- Touche invalide ---',\
+                ' --- Voiture {} sélectionnée ---']
 
     print(MESSAGES[0])
     print(MESSAGES[1])
@@ -227,17 +259,22 @@ def play_game(game: dict) -> int:
         user_answer = getkey()
         if user_answer.upper() == 'Y':
             STARTED_GAME, MAX_MOVES, CAR_A_LENGTH, CARS_INDEXES = True, game.get('max_moves'), game.get('cars')[0][2], [i for i in range(len(game.get('cars')))]
-            #TODO: PEP NiauNaSaliMukinza + Longueur max de code voir PEP8
             game_result, number_of_moves_done, times_invalid_keys_pressed = None, 0, 0
             print(MESSAGES[3])
             print(MESSAGES[4])
             print(get_game_str(game, number_of_moves_done))
-            current_car_index = None
-            key_pressed = None
+            key_pressed, current_car_index = None, None
+            
             while game_result == None and (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1]) != PARKING_EXIT \
-                                      and number_of_moves_done < MAX_MOVES and key_pressed != 'ESCAPE':
-                key_pressed = getkey()        
+                                      and number_of_moves_done < MAX_MOVES:
+                key_pressed = getkey()
                 if is_a_car_letter(key_pressed, CARS_INDEXES):
+                    if current_car_index != None:
+                        car_already_selected = key_pressed.upper() == chr(65 + current_car_index)
+                        if not car_already_selected:
+                            print(MESSAGES[9].format(key_pressed.upper())) 
+                    else:
+                        print(MESSAGES[9].format(key_pressed.upper()))
                     current_car_index = ord(key_pressed.upper()) - ord('A')
                 
                 elif is_a_move(key_pressed):
@@ -247,56 +284,62 @@ def play_game(game: dict) -> int:
                         if move_car(game, current_car_index, key_pressed):
                             number_of_moves_done += 1
                         print(get_game_str(game, number_of_moves_done))
-                
                 else:    
-                    if key_pressed.isalpha() and key_pressed != 'ESCAPE':
+                    if key_pressed == 'ESCAPE':
+                        game_result = 2
+                        
+                    elif key_pressed.isalpha():
                         print(MESSAGES[6])
                         
+                    elif times_invalid_keys_pressed % 5 == 00 and times_invalid_keys_pressed > 0:
+                        print(MESSAGES[7])
+                        times_invalid_keys_pressed += 1
+                        
                     else:
-                        #TODO: gérer le UnicodeDecodeError
-                        if times_invalid_keys_pressed % 5 == 00 and times_invalid_keys_pressed > 0:
-                            #NOT TODO: Idée: si possible pénalité en décrémentant le nombre de moves autorisés 
-                            print(MESSAGES[8])
-                            times_invalid_keys_pressed += 1
-                        else:
-                            print(MESSAGES[7])
-                            times_invalid_keys_pressed += 1
-                
+                        print(MESSAGES[8])
+                        times_invalid_keys_pressed += 1
             
             if number_of_moves_done == MAX_MOVES:
                 if game.get('cars')[0][0] != PARKING_EXIT:
                     game_result = 1
                 else:
                     game_result = 0
-            
-            if key_pressed == 'ESCAPE':
-                game_result = 2
-            
+                    
             else:
                 game_result = 0
         
         elif user_answer == 'ESCAPE':
             game_result = 2
+            STARTED_GAME = not STARTED_GAME
 
     return game_result
 
 
 def is_a_car_letter(pseudo_car_letter: str, list_of_cars_indices: list) -> bool:
+    """
+    Cette fonction prend la string "pseudo_car_letter" et une liste d'indices de voitures et vérifie qu'il s'agit bien\
+    d'une lettre de voiture valide. Toute voiture [...] aura pour indice ord([...]) - ord('A')
+    Elle renvoie True si c'est le cas, False sinon
+    """
     return pseudo_car_letter.isalpha() and len(pseudo_car_letter) == 1 and ord(pseudo_car_letter.upper()) - ord('A')\
            in list_of_cars_indices
 
 
 def is_a_move(pseudo_move: str) -> bool:
+    """
+    Cette fonction prend la string "pseudo_move" et vérifie qu'il s'agit bien d'une tentative de mouvement de voiture valide.
+    Elle renvoie True si c'est le cas, False sinon
+    """
     return pseudo_move in {'DOWN', 'UP', 'LEFT', 'RIGHT'}
 
 
 if __name__ == '__main__':
     MESSAGES_MAIN = ['▌│█║▌║▌║ OOOooh merci beaucoup ! Tu as réussi à amener ma voiture à la sortie dans les temps.\
                      Je n\'avais pas dis qu\'il manquait d\'essence donc tes mouvements étaient limités. ▌│█║▌║▌║\n▌│█║▌║▌║ Mais tu l\'as fait. Merci vraiment ! ▌│█║▌║▌║\n\
-                     _____ō͡≡o˞_____',
+                     _____🚓💨_____',
                      '▌│█║▌║▌║ Sacrebleu ! Non seulement ma voiture est coincée ici, mais en plus il n\'y a plus d\'essence !? Je n\'aurai jamais dû me garer ici.\
                      Merci toutefois pour ton aide j\'en suis reconnaissant...▌│█║▌║▌║\n --- ÉCHEC ---',\
-                     "A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴"]
+                     'A̴b̴a̴n̴d̴o̴n̴ ̴d̴e̴ ̴l̴a̴ ̴p̴a̴r̴t̴i̴e̴ \n▌│█║▌║▌║ Ah tu t\'en vas ? Dommage... Merci d\'avoir essayé.▌│█║▌║▌║\n --- ÉCHEC ---']
     
     file_inserted = argv[1]
     game = parse_game(file_inserted)
@@ -305,4 +348,4 @@ if __name__ == '__main__':
         exit(MESSAGES_MAIN[result_after_game_played])
     else:
         print(MESSAGES_MAIN[result_after_game_played])
-#TODO !!!! : DOCSTRINGS !!!!!!!
+        
