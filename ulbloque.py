@@ -300,7 +300,8 @@ def play_game(game: dict) -> int:
                         times_invalid_keys_pressed += 1
             
             if number_of_moves_done == MAX_MOVES:
-                if game.get('cars')[0][0] != PARKING_EXIT:
+                front_of_car_A = (game.get('cars')[0][0][0] + CAR_A_LENGTH, game.get('cars')[0][0][1])
+                if front_of_car_A != PARKING_EXIT:
                     game_result = 1
                 else:
                     game_result = 0
